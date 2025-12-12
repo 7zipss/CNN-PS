@@ -1,0 +1,74 @@
+# ==============================================================================
+# 1. 环境创建 (Environment Setup)
+# ==============================================================================
+# 系统要求: Linux (Ubuntu 20.04+), NVIDIA RTX 3090 (Ampere架构)
+# Python版本: 必须使用 3.8 (为了兼容 nvidia-tensorflow 和 RTX 3090)
+#
+# 创建命令:
+# conda create -n sps_CNN-PS python=3.8
+# conda activate sps_CNN-PS
+#
+# ==============================================================================
+# 2. 核心依赖安装 (Installation Order)
+# ==============================================================================
+# 注意：请严格按以下顺序安装，不要直接 pip install -r，因为 nvidia 包需要特殊源
+
+# 第一步：安装 NVIDIA 索引工具
+# pip install nvidia-pyindex
+
+# 第二步：安装 NVIDIA 魔改版 TensorFlow 1.15 (支持 RTX 3090/CUDA 11+)
+# 如果下载超时，请加参数: pip install --default-timeout=1000 nvidia-tensorflow
+# 实际安装版本: nvidia-tensorflow[horovod] (v1.15.5+nv23.3)
+
+# 第三步：安装兼容的 Keras
+Keras==2.3.1
+
+# ==============================================================================
+# 3. 其他依赖库 (Dependencies)
+# ==============================================================================
+# 必须锁定版本以避免冲突
+
+# Numpy: 必须 >=1.22.0 (nvidia-tf要求) 且 <1.24 (防止不兼容)
+numpy==1.22.4
+
+# h5py: 必须锁定 2.10.0，否则无法读取旧版 TF 保存的模型权重
+h5py==2.10.0
+
+# 图像处理与工具
+opencv-python
+matplotlib
+Pillow
+scipy
+pydot
+graphviz
+
+# ==============================================================================
+# 4. 运行时关键配置 (Runtime Configuration - CRITICAL!)
+# ==============================================================================
+# 警告：直接运行 python test.py 会导致 GPU 无法挂载 (缺少动态库路径)，
+# 必须在运行前执行以下 export 命令，或将其写入启动脚本 run_gpu.sh：
+#
+# export ENV_LIB_PATH=/home/ubuntu/anaconda3/envs/sps_CNN-PS/lib/python3.8/site-packages/nvidia
+# export LD_LIBRARY_PATH=$ENV_LIB_PATH/cublas/lib:$ENV_LIB_PATH/cudnn/lib:$ENV_LIB_PATH/cusolver/lib:$ENV_LIB_PATH/cusparse/lib:$ENV_LIB_PATH/nvjitlink/lib:$LD_LIBRARY_PATH
+#
+# python test.py
+
+# ==============================================================================
+# 5. 代码修改记录 (Code Fixes Summary)
+# ==============================================================================
+# 为了跑通代码，对源码进行了以下必要修改：
+#
+# [test.py]
+# 1. 变量名冲突: 将 K = 10 改为 K_rot = 10，避免覆盖 keras.backend (K)。
+# 2. 模型加载: 由于 Python 3.5 vs 3.8 的 marshal 兼容性问题，
+#    弃用 model = load_model(...)，改为：
+#    model = cm.get_densenet... (重建结构) + model.load_weights(...)。
+# 3. 数据集: BearPNG 前20张损坏，需使用 index=range(20,96)。
+# 4. 无头模式: 添加 matplotlib.use('Agg') 并设置 showFig=0，防止无 GUI 报错。
+#
+# [mymodule/cnn_models.py]
+# 1. 移除过时导入: 删除 'Merge', 'merge' (Keras 2.x 已弃用)。
+#
+# [mymodule/deeplearning_IO.py]
+# 1. 保存图片: 修改 TestNetwork 函数，将 plt.show() 替换为 cv2.imwrite()，
+#    并保存到 test_results/ 文件夹。

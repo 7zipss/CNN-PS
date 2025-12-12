@@ -484,8 +484,26 @@ def TestNetwork(model, Sv,Nv,Rv,IDv,Szv,showFig, isTensorFlow):
         Err = np.reshape(Err,(height,width,3))
         Nest = np.reshape(Nest, (height,width,3))
 
-        if showFig == True:
-            plt.figure(figsize=(16,16))
-            plt.imshow(np.concatenate((np.uint8(127*(Nest+1)),5*np.uint8(Err)), axis=1))
-            plt.axis('off')
-            plt.show()
+        # if showFig == True:
+        #     plt.figure(figsize=(16,16))
+        #     plt.imshow(np.concatenate((np.uint8(127*(Nest+1)),5*np.uint8(Err)), axis=1))
+        #     plt.axis('off')
+        #     plt.show()
+
+        # ------------------ 修改开始：保存结果到指定文件夹 ------------------
+        # 1. 定义并创建输出文件夹
+        output_dir = 'test_results'  # 您可以随意修改这个文件夹名字
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        # 2. 拼接图片：左边是预测法线，右边是误差热力图
+        vis_img_rgb = np.concatenate((np.uint8(127 * (Nest + 1)), 5 * np.uint8(Err)), axis=1)
+
+        # 3. 组合路径 (例如: test_results/result_bearPNG_0.png)
+        save_name = os.path.join(output_dir, 'result_bearPNG_%d.png' % i)
+
+        # 4. 保存图片 (记得转 BGR 格式)
+        cv2.imwrite(save_name, cv2.cvtColor(vis_img_rgb, cv2.COLOR_RGB2BGR))
+
+        print('  -> Image saved to: %s' % save_name)
+        # ------------------ 修改结束 ------------------

@@ -1,7 +1,8 @@
 from keras import backend as K
 from keras.models import Input, Model
 from keras.layers.core import Layer, Dense, Dropout, Activation, Flatten, Reshape, Permute, Lambda
-from keras.layers import Merge, merge, Concatenate, concatenate, MaxPooling1D, multiply
+# from keras.layers import Merge, merge, Concatenate, concatenate, MaxPooling1D, multiply
+from keras.layers import Concatenate, concatenate, MaxPooling1D, multiply #删除Merge, merge
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, UpSampling2D, ZeroPadding2D, Conv1D, Conv2D, AveragePooling2D
 from keras.layers.pooling import GlobalAveragePooling2D
 from keras.layers.normalization import BatchNormalization
