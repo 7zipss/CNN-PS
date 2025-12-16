@@ -8,4 +8,4 @@ export LD_LIBRARY_PATH=$ENV_LIB_PATH/cublas/lib:$ENV_LIB_PATH/cudnn/lib:$ENV_LIB
 echo "GPU 环境配置完成，正在使用 RTX 3090 运行..."
 
 # 3. 运行 Python 代码
-python test.py
+python test_all.py

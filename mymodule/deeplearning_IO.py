@@ -329,6 +329,15 @@ def prep_data_2d_from_images_test(dirlist, scale, w, rotdiv, index=-1):
         nml = cv2.resize(nml, None, fx = scale, fy = scale, interpolation = cv2.INTER_NEAREST)
 
         # nml = np.flipud(nml) # Uncomment when test on Harvest, the surface noraml needs to be fliped upside down
+        # ================= [一劳永逸修复补丁] =================
+        # 自动检测是否是 harvestPNG，如果是，强制翻转法线
+        # 获取当前文件夹的名字
+        current_obj_name = os.path.basename(dirpath.rstrip('/'))
+
+        if 'harvestPNG' in current_obj_name:
+            print(f"   🔧 自动检测到 {current_obj_name}: 已修正法线方向 (Flip Upside-Down)")
+            nml = np.flipud(nml)
+        # ====================================================
 
         nShape = np.shape(nml)
         height = nShape[0]
@@ -507,3 +516,7 @@ def TestNetwork(model, Sv,Nv,Rv,IDv,Szv,showFig, isTensorFlow):
 
         print('  -> Image saved to: %s' % save_name)
         # ------------------ 修改结束 ------------------
+        # ============ 【请添加这一行】 ============
+        # 把计算出的平均误差返回，方便外部统计
+        return error / len(ID)
+        # ========================================
