@@ -12,8 +12,9 @@ from keras.models import load_model
 from keras.utils import multi_gpu_model
 from mymodule import deeplearning_IO as dio
 from mymodule import cnn_models as cm
+import gc  # <--- 添加这一行
 
-isParallel = True # one if multi gpu is available
+isParallel = False  # 改为单卡模式 # one if multi gpu is available
 
 if K.image_data_format() == 'channels_first': # theano
     model = cm.get_densenet_2d_channel_first_2dense(w,w)
@@ -25,19 +26,36 @@ if isParallel:
 else:
     model.compile(optimizer=keras.optimizers.Adam(), loss='mean_squared_error')
 
-datagenerated = '/media/sikehata/e4608bc5-8fbc-4efe-a6f3-7ac7f270d0ea/BlenderRendering/DataGenerated' # path to the training dataset
+datagenerated = '/data/sps/datasets/CyclesPSDataset/CyclesSpecularMetallic' # path to the training dataset
 objlist = sorted(os.listdir(datagenerated + '/PRPS'))
 epochs = 1
 min_err = 1000
 rotdivin = 10
 rotdivon = 10
-datasplit = 3 # len(objlist)/datasplit should be integer
+# --- 核心修改区 ---
+loopnum = 10   # 显式定义总轮数 (原代码里是硬写的 range(10))
+divnum = 15    # 将原来的 datasplit 改名为 divnum，并设置为 15 (对应15个物体)
 
-subsetsize = np.int32(len(objlist)/datasplit)
-for k in range(10):
+# 计算每个分块的大小 (如果是 15/15，结果就是 1)
+subsetsize = np.int32(len(objlist) / divnum)
+
+# 外层循环：k 代表当前的轮数 (对应我之前说的 loop)
+for k in range(loopnum):
     datalist = []
-    for p in range(datasplit):
-        print('%d-th loop' % (k+1), '%d' % (p+1) + '/' + '%d' % datasplit)
+    # 内层循环：p 代表当前的分块 (对应我之前说的 k)
+    for p in range(divnum):
+        # ================= 修正后的打印代码 =================
+        # 变量映射关系：
+        # loop (当前轮) -> k
+        # loopnum (总轮数) -> loopnum
+        # divnum (总块数) -> divnum
+        # k (当前块) -> p  <-- 注意这里！内层循环变量其实是 p
+
+        print('\n' + '=' * 60)
+        # 这里的 k+1 是当前第几轮，p+1 是当前第几块
+        print(f'🚀 进度指示: 正在运行第 {k + 1} 轮 (共 {loopnum} 轮) | 第 {p + 1} 个分块 (共 {divnum} 块)')
+        print('=' * 60 + '\n')
+        # ==================================================
         SList = []
         NList = []
         for q in range(subsetsize):
@@ -54,7 +72,7 @@ for k in range(10):
             objroot = datagenerated + '/PRPS'
             dirname = 'images_specular'
             datapath = [objroot + '/' + '%s' % objlist[subsetsize*p+q]]
-            print(datapath)
+            print("images_specular=" + " " + datapath)
             S,M,N = dio.prep_data_2d_from_images_cycles(datapath, dirname, 0.5, w, rotdivin, rotdivon)
             SList.append(S.copy())
             NList.append(N.copy())
@@ -62,7 +80,7 @@ for k in range(10):
 
             objroot = datagenerated + '/PRPS'
             datapath = [objroot + '/' + '%s' % objlist[subsetsize*p+q]]
-            print(datapath)
+            print("images_metallic=" + " " + datapath)
             dirname = 'images_metallic'
             S,M,N = dio.prep_data_2d_from_images_cycles(datapath, dirname, 0.5, w, rotdivin, rotdivon)
             SList.append(S.copy())
@@ -79,4 +97,12 @@ for k in range(10):
 
         model.save('weight_and_model_user.hdf5')
         print('Model Updated!!')
-        del SList,NList
+
+        # --- 修改后的代码 (带显式验证) ---
+        del SList, NList
+
+        # 让 gc 跑，并用 n 记录它回收了多少垃圾
+        n = gc.collect()
+
+        print(f'🧹 [内存大扫除] 本轮清理了 {n} 个废弃对象，内存已释放！')
+        print('-' * 60)

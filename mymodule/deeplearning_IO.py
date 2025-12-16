@@ -492,7 +492,7 @@ def TestNetwork(model, Sv,Nv,Rv,IDv,Szv,showFig, isTensorFlow):
 
         # ------------------ 修改开始：保存结果到指定文件夹 ------------------
         # 1. 定义并创建输出文件夹
-        output_dir = 'test_results'  # 您可以随意修改这个文件夹名字
+        output_dir = 'test_results_user1'  # 您可以随意修改这个文件夹名字
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 

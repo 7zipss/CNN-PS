@@ -64,7 +64,7 @@ def main():
 
     # 加载权重
     print("Loading weights...")
-    model.load_weights('weight_and_model.hdf5')
+    model.load_weights('weight_and_model_user.hdf5')
     # ------------------ 修改结束 ------------------
 
     # Test network
